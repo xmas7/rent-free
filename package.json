@@ -1,7 +1,7 @@
 {
   "name": "rent-free",
   "homepage": "https://0xscuba.github.io/rent-free/",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "dependencies": {
     "@solana/spl-token": "^0.1.8",
