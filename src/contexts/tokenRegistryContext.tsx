@@ -18,6 +18,7 @@ export function TokenRegistryContextProvider(props: any) {
   useEffect(() => {
     new TokenListProvider().resolve().then((tokens: TokenListContainer) => {
       const tokenMap: TokenInfoMap = new Map();
+      // TODO filterByChainId
       tokens.getList().forEach((item: TokenInfo) => {
         tokenMap.set(item.address, item);
       });
