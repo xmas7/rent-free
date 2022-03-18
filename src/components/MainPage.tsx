@@ -71,7 +71,7 @@ function EmptyTokens({
   setIsLoading: (isLoading: boolean) => void;
 }
 ) {
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey, signTransaction, signAllTransactions } = useWallet();
   const { connection } = useConnection();
 
   async function closeAccount(account: any) {
@@ -98,9 +98,45 @@ function EmptyTokens({
     }
   }
 
+  async function closeAllAccounts() {
+    if (!publicKey || !signAllTransactions) {
+      return;
+    }
+    const recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+
+    let txArr: Transaction[] = [];
+    emptyAccounts.forEach((acc: any) => {
+      const tx = new Transaction({ recentBlockhash, feePayer: publicKey });
+      tx.add(buildCloseTokenAccountInstruction(publicKey, acc.accountAddress));
+      txArr.push(tx);
+    })
+
+    try {
+      const signedTxArr = await signAllTransactions(txArr);
+      setIsLoading(true);
+      await Promise.all(signedTxArr.map((signedTx) => new Promise(resolve => {
+        connection.sendRawTransaction(signedTx.serialize()).then((txId) => {
+          resolve(txId);
+          //connection.confirmTransaction(txId, "processed").then((v) => resolve(v));
+        });
+      })));
+    } catch(e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
+
   const content = emptyAccounts.length === 0 ? <SectionTitle>No empty accounts</SectionTitle> : (
     <>
       <SectionTitle>Zero balance token accounts</SectionTitle>
+      <SectionContent>
+        <TokenCloseButton onClick={() => closeAllAccounts()} disabled={isLoading}>
+          Close ALL
+        </TokenCloseButton>
+      </SectionContent>
+      
       <SectionContent>
         {emptyAccounts.map((account) => (
           <TokenContainer key={account.mintAddress}>
